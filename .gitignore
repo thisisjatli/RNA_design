@@ -6,6 +6,7 @@
 /slurm
 arnie_file.txt
 .DS_Store
+debug*
 # *.ipynb
 
 # Byte-compiled / optimized / DLL files

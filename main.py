@@ -115,7 +115,7 @@ def get_data_splits(config, split_type="structsim_v2"):
     
     def index_list_by_indices(lst, indices):
         # return [lst[index] if 0 <= index < len(lst) else None for index in indices]
-        return [lst[index] for index in indices]
+        return [lst[index] for index in indices if index < len(lst)]
     
     # Pre-compute using notebooks/split_{split_type}.ipynb
     train_idx_list, val_idx_list, test_idx_list = torch.load(
