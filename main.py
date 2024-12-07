@@ -51,22 +51,26 @@ def main(config, device):
         test_loader = get_dataloader(config, testset, shuffle=False)
 
         # Run evaluator + save designed structures
-        results = evaluate(
+        results, taro_results = evaluate(
             model, 
             test_loader.dataset, 
             config.n_samples, 
             config.temperature, 
             device, 
             model_name="test",
-            metrics=['recovery', 'perplexity', 'sc_score_eternafold', 'sc_score_ribonanzanet', 'sc_score_rhofold'],
+            # metrics=['recovery', 'perplexity', 'sc_score_eternafold', 'sc_score_ribonanzanet', 'sc_score_rhofold'],
+            metrics=['recovery', 'perplexity'],
             save_designs=True
         )
-        df, samples_list, recovery_list, perplexity_list, \
-        scscore_list, scscore_ribonanza_list, \
-        scscore_rmsd_list, scscore_tm_list, scscore_gdt_list, \
-        rmsd_within_thresh, tm_within_thresh, gdt_within_thresh = results.values()
         # Save results
         torch.save(results, os.path.join(wandb.run.dir, f"test_results.pt"))
+        print(f"Results saved at {os.path.join(wandb.run.dir, 'test_results.pt')}.")
+        torch.save(taro_results, os.path.join(wandb.run.dir, f"taro_results.pt"))
+        print(f"Results saved at {os.path.join(wandb.run.dir, 'taro_results.pt')}.")
+
+        df, samples_list, recovery_list, perplexity_list = results.values()
+        print(f"BEST test recovery: {np.mean(recovery_list):.4f}\
+                perplexity: {np.mean(perplexity_list):.4f}")
         # Update wandb summary metrics
         wandb.run.summary[f"best_test_recovery"] = np.mean(recovery_list)
         wandb.run.summary[f"best_test_perplexity"] = np.mean(perplexity_list)
@@ -78,16 +82,6 @@ def main(config, device):
         wandb.run.summary[f"best_test_rmsd_within_thresh"] = np.mean(rmsd_within_thresh)
         wandb.run.summary[f"best_test_tm_within_thresh"] = np.mean(tm_within_thresh)
         wandb.run.summary[f"best_test_gdt_within_thresh"] = np.mean(gdt_within_thresh)
-        print(f"BEST test recovery: {np.mean(recovery_list):.4f}\
-                perplexity: {np.mean(perplexity_list):.4f}\
-                scscore: {np.mean(scscore_list):.4f}\
-                scscore_ribonanza: {np.mean(scscore_ribonanza_list):.4f}\
-                scscore_rmsd: {np.mean(scscore_rmsd_list):.4f}\
-                scscore_tm: {np.mean(scscore_tm_list):.4f}\
-                scscore_gdt: {np.mean(scscore_gdt_list):.4f}\
-                rmsd_within_thresh: {np.mean(rmsd_within_thresh):.4f}\
-                tm_within_thresh: {np.mean(tm_within_thresh):.4f}\
-                gdt_within_thresh: {np.mean(gdt_within_thresh):.4f}")
 
     else:
         # Get train, val, test data samples as lists
@@ -227,7 +221,8 @@ if __name__ == "__main__":
             project=os.environ.get("WANDB_PROJECT"), 
             entity=os.environ.get("WANDB_ENTITY"), 
             config=args.config, 
-            name=args.expt_name, 
+            name=args.expt_name,
+            id=args.expt_name,
             mode='disabled'
         )
     else:
@@ -236,6 +231,7 @@ if __name__ == "__main__":
             entity=os.environ.get("WANDB_ENTITY"), 
             config=args.config, 
             name=args.expt_name, 
+            id=args.expt_name, 
             tags=args.tags,
             mode='online'
         )
@@ -252,6 +248,6 @@ if __name__ == "__main__":
         device = torch.device("xpu:{}".format(config.gpu) if torch.xpu.is_available() else 'cpu')
     else:
         device = torch.device("cuda:{}".format(config.gpu) if torch.cuda.is_available() else "cpu")
-    
+    ("Training on", device)
     # Run main function
     main(config, device)

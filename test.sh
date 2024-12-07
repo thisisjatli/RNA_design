@@ -25,5 +25,5 @@ conda activate rna
 
 touch .env
 
-python main.py --expt_name AdamW_CosineAnnealingLR
+python main.py --config configs/eval.yaml --expt_name default_test_taro_results
 # python debug.py
